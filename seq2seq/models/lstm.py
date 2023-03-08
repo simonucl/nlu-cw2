@@ -241,7 +241,7 @@ class LSTMDecoder(Seq2SeqDecoder):
             hidden_size=hidden_size)
             for layer in range(num_layers)])
 
-        self.final_projection = nn.Linear(hidden_size, len(dictionary))
+        self.final_projection = nn.Linear(hidden_size, len(dictionary)).to("cuda:0")
 
         self.use_lexical_model = use_lexical_model
         if self.use_lexical_model:
@@ -297,7 +297,7 @@ class LSTMDecoder(Seq2SeqDecoder):
 
         for j in range(tgt_time_steps):
             # Concatenate the current token embedding with output from previous time step (i.e. 'input feeding')
-            lstm_input = torch.cat([tgt_embeddings[j, :, :], input_feed], dim=1)
+            lstm_input = torch.cat([tgt_embeddings[j, :, :], input_feed], dim=1).cuda()
 
             for layer_id, rnn_layer in enumerate(self.layers):
                 # Pass target input through the recurrent layer(s)

@@ -59,6 +59,7 @@ def main(args):
     logging.info('Commencing training!')
     torch.manual_seed(42)
     np.random.seed(42)
+    torch.cuda.set_device(0)
 
     utils.init_logging(args)
 
@@ -79,9 +80,9 @@ def main(args):
     valid_dataset = load_data(split='valid')
 
     # Build model and optimization criterion
-    model = models.build_model(args, src_dict, tgt_dict)
+    model = models.build_model(args, src_dict, tgt_dict).cuda()
     logging.info('Built a model with {:d} parameters'.format(sum(p.numel() for p in model.parameters())))
-    criterion = nn.CrossEntropyLoss(ignore_index=src_dict.pad_idx, reduction='sum')
+    criterion = nn.CrossEntropyLoss(ignore_index=src_dict.pad_idx, reduction='sum').cuda()
 
     # Instantiate optimizer and learning rate scheduler
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
@@ -112,6 +113,7 @@ def main(args):
 
         # Iterate over the training set
         for i, sample in enumerate(progress_bar):
+            sample = utils.move_to_cuda(sample)
 
             if len(sample) == 0:
                 continue
@@ -179,6 +181,8 @@ def validate(args, model, criterion, valid_dataset, epoch):
 
     # Iterate over the validation set
     for i, sample in enumerate(valid_loader):
+        sample = utils.move_to_cuda(sample)
+
         if len(sample) == 0:
             continue
         with torch.no_grad():
